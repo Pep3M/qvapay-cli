@@ -1,0 +1,31 @@
+{
+  "name": "qvapay",
+  "version": "0.0.0",
+  "description": "CLI para la wallet personal de QvaPay: TUI interactiva y comandos directos.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "qvapay": "src/cli.ts"
+  },
+  "files": [
+    "src",
+    "agent"
+  ],
+  "scripts": {
+    "dev": "bun --watch run src/cli.ts",
+    "start": "bun run src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}
