@@ -1,4 +1,4 @@
-import { getMe } from "../lib/auth"
+import { getUser } from "../lib/auth"
 import { fail, type GlobalOpts, requireToken } from "./util"
 
 export async function whoamiCommand(opts: GlobalOpts): Promise<void> {
@@ -6,15 +6,15 @@ export async function whoamiCommand(opts: GlobalOpts): Promise<void> {
   if (!token) return
 
   try {
-    const me = await getMe(token)
+    const user = await getUser(token)
     if (opts.json) {
-      console.log(JSON.stringify(me, null, 2))
+      console.log(JSON.stringify(user, null, 2))
     } else {
-      console.log(`@${me.username}  (${me.name})`)
-      console.log(`Email:   ${me.email}`)
-      console.log(`Balance: ${me.balance}  (pendiente: ${me.pending_balance})`)
+      console.log(`@${user.username}  (${user.name} ${user.lastname})`)
+      console.log(`Email:   ${user.email}`)
+      console.log(`Balance: ${user.balance}`)
     }
   } catch (e) {
-    fail(e, opts.json)
+    fail(e, opts)
   }
 }

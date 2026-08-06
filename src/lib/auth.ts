@@ -2,7 +2,11 @@
 // Estas funciones solo golpean la API; los prompts viven en los comandos/TUI.
 
 import { api } from "./client"
-import type { Me, QvaPayLoginResponse, QvaPayRequestPinResponse } from "./types"
+import type {
+  QvaPayLoginResponse,
+  QvaPayRequestPinResponse,
+  User,
+} from "./types"
 
 export function requestPin(
   email: string,
@@ -39,6 +43,7 @@ export async function checkAuth(token: string): Promise<boolean> {
   }
 }
 
-export function getMe(token: string): Promise<Me> {
-  return api<Me>("/me", { token })
+// Perfil autenticado. Incluye balance (número) y latest_transactions.
+export function getUser(token: string): Promise<User> {
+  return api<User>("/user", { token })
 }

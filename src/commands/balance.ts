@@ -1,4 +1,4 @@
-import { getMe } from "../lib/auth"
+import { getUser } from "../lib/auth"
 import { fail, type GlobalOpts, requireToken } from "./util"
 
 export async function balanceCommand(opts: GlobalOpts): Promise<void> {
@@ -6,19 +6,13 @@ export async function balanceCommand(opts: GlobalOpts): Promise<void> {
   if (!token) return
 
   try {
-    const me = await getMe(token)
+    const user = await getUser(token)
     if (opts.json) {
-      console.log(
-        JSON.stringify({
-          balance: me.balance,
-          pending_balance: me.pending_balance,
-        })
-      )
+      console.log(JSON.stringify({ balance: user.balance }))
     } else {
-      console.log(`Disponible: ${me.balance}`)
-      console.log(`Pendiente:  ${me.pending_balance}`)
+      console.log(`Disponible: ${user.balance}`)
     }
   } catch (e) {
-    fail(e, opts.json)
+    fail(e, opts)
   }
 }

@@ -31,16 +31,33 @@ export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
     },
   })
 
-  const data = (await res.json().catch(() => null)) as
-    | (QvaPayApiError & T)
-    | null
+  const text = await res.text()
+  let data: (QvaPayApiError & T) | null = null
+  if (text) {
+    try {
+      data = JSON.parse(text)
+    } catch {
+      // cuerpo no-JSON: se maneja abajo
+    }
+  }
 
   if (!res.ok || data?.error || data?.errors) {
     throw new QvaPayError(
-      normalizeError(data) ?? `HTTP ${res.status}`,
+      normalizeError(data) ?? `HTTP ${res.status} en ${path}`,
       res.status
     )
   }
+
+  // 2xx pero sin JSON usable: NO devolver null en silencio, mostrar la causa.
+  if (data === null) {
+    const ct = res.headers.get("content-type") ?? "desconocido"
+    const body = text ? text.slice(0, 160).replace(/\s+/g, " ") : "(vacío)"
+    throw new QvaPayError(
+      `Respuesta no-JSON de ${path} (HTTP ${res.status}, ${ct}): ${body}`,
+      res.status
+    )
+  }
+
   return data as T
 }
 

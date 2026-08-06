@@ -33,9 +33,10 @@ program
 
 const tx = program.command("tx").description("Transacciones")
 tx.command("list")
-  .description("Lista las últimas transacciones")
-  .option("--limit <n>", "máximo a mostrar")
+  .description("Lista transacciones")
+  .option("--limit <n>", "cantidad por página (1-30, def. 20)")
   .option("--page <n>", "página")
+  .option("--status <estado>", "paid | pending | cancelled (def. paid)")
   .action((opts) => txListCommand({ ...program.opts(), ...opts }))
 tx.command("get <uuid>")
   .description("Detalle de una transacción")

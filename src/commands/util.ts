@@ -22,13 +22,19 @@ export function notAuthenticated(json?: boolean): void {
 }
 
 // Imprime un error y fija el exit code (401 -> 2 no autenticado, resto -> 1).
-export function fail(e: unknown, json?: boolean): void {
+export function fail(e: unknown, opts: GlobalOpts = {}): void {
   if (e instanceof QvaPayError && e.status === 401) {
-    notAuthenticated(json)
+    notAuthenticated(opts.json)
     return
   }
-  const msg = e instanceof QvaPayError ? e.message : "Error inesperado"
-  if (json) console.log(JSON.stringify({ error: msg }))
+  const msg =
+    e instanceof QvaPayError
+      ? e.message
+      : e instanceof Error
+        ? `Error inesperado: ${e.message}`
+        : "Error inesperado"
+  if (opts.json) console.log(JSON.stringify({ error: msg }))
   else console.error(`✖ ${msg}`)
+  if (opts.verbose && e instanceof Error && e.stack) console.error(e.stack)
   process.exitCode = 1
 }

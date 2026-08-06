@@ -36,19 +36,31 @@ export interface QvaPayApiError {
   message?: string
 }
 
-// Forma laxa: la API personal aún no está confirmada campo a campo.
 export interface Transaction {
   uuid: string
-  amount: string | number
+  amount: number | string
   description?: string
   status?: string
   created_at?: string
   [key: string]: unknown
 }
 
-export interface Paginated<T> {
-  data?: T[]
-  current_page?: number
-  last_page?: number
-  total?: number
+// Respuesta de GET /user (Bearer). balance es NÚMERO; no hay pending_balance.
+// Las transacciones recientes vienen embebidas en latest_transactions.
+export interface User {
+  uuid: string
+  username: string
+  name: string
+  lastname: string
+  email: string
+  bio: string
+  balance: number
+  satoshis: number
+  phone: string
+  phone_verified: boolean
+  kyc: boolean
+  golden_check: boolean
+  p2p_enabled: boolean
+  image: string
+  latest_transactions: Transaction[]
 }

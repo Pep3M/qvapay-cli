@@ -1,31 +1,55 @@
-// Lectura de wallet: transacciones. El balance sale de /me (ver auth.getMe).
-import { api } from "./client"
-import type { Paginated, Transaction } from "./types"
+// Lectura de transacciones: GET /transaction (Bearer).
+// take: 1-30 (def. 20) · page · status: paid|pending|cancelled (def. paid).
+// Devuelve un array, o { transactions, total } cuando include_total=true.
+// Rate limit del servidor: 3 req / 5 s (429).
+import { api, QvaPayError } from "./client"
+import type { Transaction } from "./types"
 
-// ponytail: paths del cliente oficial (client-node) + patrón /transaction/* de los docs.
-// NO verificado aún contra la API personal con token real. Si falla, cambiar aquí.
-const LIST_PATH = "/transactions"
-const DETAIL_PATH = (uuid: string) => `/transaction/${uuid}`
+type TxResponse =
+  | Transaction[]
+  | { transactions?: Transaction[]; total?: number }
 
-export function listTransactions(
-  token: string,
+export interface ListParams {
+  take?: number
   page?: number
-): Promise<Paginated<Transaction> | Transaction[]> {
-  const q = page ? `?page=${page}` : ""
-  return api<Paginated<Transaction> | Transaction[]>(`${LIST_PATH}${q}`, {
+  status?: string
+}
+
+export async function listTransactions(
+  token: string,
+  params: ListParams = {}
+): Promise<Transaction[]> {
+  const q = new URLSearchParams()
+  if (params.take) q.set("take", String(params.take))
+  if (params.page) q.set("page", String(params.page))
+  if (params.status) q.set("status", params.status)
+  const qs = q.toString()
+  const resp = await api<TxResponse>(`/transaction${qs ? `?${qs}` : ""}`, {
     token,
   })
+  return unwrapTransactions(resp)
 }
 
-export function getTransaction(token: string, uuid: string): Promise<unknown> {
-  return api<unknown>(DETAIL_PATH(uuid), { token })
+export async function getTransaction(
+  token: string,
+  uuid: string
+): Promise<Transaction> {
+  const resp = await api<TxResponse>(
+    `/transaction?uuid=${encodeURIComponent(uuid)}`,
+    { token }
+  )
+  const tx = unwrapTransactions(resp)[0]
+  if (!tx) throw new QvaPayError(`Transacción ${uuid} no encontrada`, 404)
+  return tx
 }
 
-// Extrae el array de la respuesta (paginada o cruda) y aplica el límite local.
-export function pickTransactions(
-  resp: Paginated<Transaction> | Transaction[],
-  limit?: number
-): Transaction[] {
-  const arr = Array.isArray(resp) ? resp : (resp.data ?? [])
-  return typeof limit === "number" ? arr.slice(0, limit) : arr
+// La respuesta viene como array crudo o envuelta en { transactions }.
+export function unwrapTransactions(resp: TxResponse): Transaction[] {
+  return Array.isArray(resp) ? resp : (resp.transactions ?? [])
+}
+
+// El servidor exige take entre 1 y 30.
+export function clampTake(limit?: number): number | undefined {
+  if (limit == null || Number.isNaN(limit)) return undefined
+  return Math.max(1, Math.min(30, Math.floor(limit)))
 }
