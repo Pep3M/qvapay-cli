@@ -35,3 +35,20 @@ export interface QvaPayApiError {
   errors?: string[]
   message?: string
 }
+
+// Forma laxa: la API personal aún no está confirmada campo a campo.
+export interface Transaction {
+  uuid: string
+  amount: string | number
+  description?: string
+  status?: string
+  created_at?: string
+  [key: string]: unknown
+}
+
+export interface Paginated<T> {
+  data?: T[]
+  current_page?: number
+  last_page?: number
+  total?: number
+}
