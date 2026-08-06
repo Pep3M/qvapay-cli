@@ -6,7 +6,6 @@ import { loginCommand } from "./commands/login"
 import { logoutCommand } from "./commands/logout"
 import { txGetCommand, txListCommand } from "./commands/tx"
 import { whoamiCommand } from "./commands/whoami"
-import { tuiStub } from "./tui/app"
 
 const program = new Command()
 
@@ -42,13 +41,13 @@ tx.command("get <uuid>")
   .description("Detalle de una transacción")
   .action((uuid) => txGetCommand(uuid, program.opts()))
 
-// Sin subcomando -> TUI (por ahora, stub). Con subcomando -> Commander.
+// Sin subcomando -> TUI (Ink, carga perezosa). Con subcomando -> Commander.
 if (process.argv.length <= 2) {
-  console.log(tuiStub())
-  process.exit(0)
+  const { startTui } = await import("./tui/app")
+  startTui()
+} else {
+  program.parseAsync().catch((e: unknown) => {
+    console.error(e instanceof Error ? e.message : e)
+    process.exit(1)
+  })
 }
-
-program.parseAsync().catch((e: unknown) => {
-  console.error(e instanceof Error ? e.message : e)
-  process.exit(1)
-})
