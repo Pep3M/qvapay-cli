@@ -224,5 +224,7 @@ export function startTui() {
     )
     return
   }
-  render(<App />)
+  const { waitUntilExit } = render(<App />)
+  // Al salir (q), termina el proceso aunque quede algún handle de stdin colgado.
+  waitUntilExit().finally(() => process.exit(0))
 }
