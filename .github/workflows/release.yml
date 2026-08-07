@@ -7,32 +7,37 @@ on:
 
 permissions:
   contents: write # crear el Release
-  id-token: write # provenance de npm
+  id-token: write # OIDC: trusted publishing + provenance de npm
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Pausa el publish hasta que un reviewer aprueba (Settings > Environments > release).
+    environment: release
     steps:
-      - uses: actions/checkout@v4
+      # Actions pineadas por SHA (ver comentario = tag legible). Dependabot las sube.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: latest
 
-      # node para `npm publish --provenance`.
-      - uses: actions/setup-node@v4
+      # node para `npm publish`. registry-url es necesario para el OIDC.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing (OIDC) requiere npm >= 11.5.1; node 20 trae 10.x.
+      - run: npm install -g npm@latest
 
       - run: bun install --frozen-lockfile
 
       - run: bun test
 
-      # Bundle npm + publish con provenance (prepublishOnly ya corre el build).
+      # Publish por OIDC: sin NODE_AUTH_TOKEN. La provenance se genera sola,
+      # el flag la deja explícita. prepublishOnly ya corre el build.
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Los 5 binarios autocontenidos + checksums.
       - run: bun run build.ts --compile
@@ -42,7 +47,7 @@ jobs:
           sha256sum qvapay-linux-x64 qvapay-linux-arm64 qvapay-darwin-x64 \
             qvapay-darwin-arm64 qvapay-windows-x64.exe > SHA256SUMS
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           files: |
             dist/qvapay-linux-x64
