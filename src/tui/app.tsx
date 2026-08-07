@@ -15,18 +15,8 @@ const LINE = "#2a2c40"
 const GREEN = "#3ddc84"
 const RED = "#f0506b"
 
-// ponytail: espejo de package.json; sync al bumpear versión.
-const VERSION = "0.0.0"
-
-// Rampa de morados para el shimmer del logo (oscuro → brillante).
+// Rampa de morados para el degradado y el barrido del título (oscuro → brillante).
 const RAMP = ["#2a2560", "#4b3fb0", "#6d5ef1", "#9a8cff", "#d8d2ff"]
-const LOGO = [
-  " ███  █   █  ███  ████   ███  █   █     ███  █     ███ ",
-  "█   █ █   █ █   █ █   █ █   █  █ █     █     █      █  ",
-  "█   █ █   █ █████ ████  █████   █      █     █      █  ",
-  "█  █   █ █  █   █ █     █   █   █      █     █      █  ",
-  " ██ █   █   █   █ █     █   █   █       ███  █████ ███ ",
-]
 
 const TABS = [
   { num: 1, label: "Balance" },
@@ -48,7 +38,6 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
   const [user, setUser] = useState<User | undefined>(initialUser)
   const [txs, setTxs] = useState<Transaction[] | undefined>(initialTxs)
   const [tab, setTab] = useState(1)
-  const [showSplash, setShowSplash] = useState(true)
   const [loading, setLoading] = useState(!initialUser && !fixture)
   const [error, setError] = useState<string | null>(null)
   const [noAuth, setNoAuth] = useState(false)
@@ -94,18 +83,8 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
     }
   }, [tab, txs, token, fixture])
 
-  // El splash se cierra medio segundo después de que la conexión se resuelva
-  // (perfil cargado, sin sesión, o error). También lo cierra cualquier tecla.
-  const settled = !!user || noAuth || !!error
-  useEffect(() => {
-    if (!showSplash || !settled) return
-    const t = setTimeout(() => setShowSplash(false), 500)
-    return () => clearTimeout(t)
-  }, [showSplash, settled])
-
   useInput((input, key) => {
     if (input === "q" || (key.ctrl && input === "c")) return exit()
-    if (showSplash) return setShowSplash(false)
     if (key.escape) tab === 1 ? exit() : setTab(1)
     else if (["1", "2", "3", "4", "5"].includes(input)) setTab(Number(input))
     else if (input === "r" && !fixture) {
@@ -116,8 +95,6 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
 
   const recent = txs ?? user?.latest_transactions ?? []
   const conn = connOf({ user, loading, noAuth, error })
-
-  if (showSplash) return <Splash user={user} conn={conn} />
 
   return (
     <Box
@@ -171,68 +148,50 @@ const TITLE_ASCII =
 const TITLE_ROW_COLORS = [RAMP[2], RAMP[3], RAMP[4], RAMP[4], RAMP[3], RAMP[2]]
 
 function TitleBar() {
+  // Un único barrido de brillo al abrir: una banda recorre el figlet de
+  // izquierda a derecha y se detiene, dejando el degradado base.
+  const width = TITLE_ASCII[0]?.length ?? 60
+  const [sweep, setSweep] = useState(-8)
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSweep((s) => {
+        if (s > width + 8) {
+          clearInterval(id)
+          return s
+        }
+        return s + 2
+      })
+    }, 35)
+    return () => clearInterval(id)
+  }, [width])
+  const done = sweep > width + 8
+
   return (
     <Box flexDirection="column" alignItems="center">
       {TITLE_ASCII.map((line, r) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: filas fijas del título
-        <Text key={r} bold color={TITLE_ROW_COLORS[r] ?? ACCENT}>
-          {line}
+        <Text key={r} bold>
+          {[...line].map((ch, c) => {
+            if (ch === " ") return " "
+            const base = TITLE_ROW_COLORS[r] ?? ACCENT
+            const dist = done ? 99 : Math.abs(c - sweep)
+            const color =
+              dist <= 1
+                ? "#ffffff"
+                : dist <= 3
+                  ? RAMP[4]
+                  : dist <= 6
+                    ? RAMP[3]
+                    : base
+            return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: celdas fijas del título
+              <Text key={c} color={color}>
+                {ch}
+              </Text>
+            )
+          })}
         </Text>
       ))}
-    </Box>
-  )
-}
-
-// Encabezado de bienvenida (estilo Claude Code) con el logo en shimmer animado.
-// El cierre lo controla App (0.5s tras conectar) o cualquier tecla.
-function Splash({ user, conn }: { user?: User; conn: Conn }) {
-  const [t, setT] = useState(0)
-  useEffect(() => {
-    const tick = setInterval(() => setT((x) => x + 1), 85)
-    return () => clearInterval(tick)
-  }, [])
-
-  const period = 16
-  const head = (t * 3) % period
-  return (
-    <Box
-      flexDirection="column"
-      borderStyle="round"
-      borderColor={ACCENT}
-      paddingX={2}
-      paddingY={1}
-    >
-      <Text bold color={ACCENT}>
-        qvapay-cli <Text color={DIM}>v{VERSION}</Text>
-      </Text>
-      <Box flexDirection="column" alignItems="center" marginY={1}>
-        {LOGO.map((line, r) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: filas fijas del logo
-          <Text key={r}>
-            {[...line].map((ch, c) => {
-              if (ch === " ") return " "
-              let d = Math.abs(((c + r) % period) - head)
-              d = Math.min(d, period - d)
-              const idx = Math.max(0, RAMP.length - 1 - d)
-              return (
-                // biome-ignore lint/suspicious/noArrayIndexKey: celdas fijas del logo
-                <Text key={c} color={RAMP[idx]}>
-                  {ch}
-                </Text>
-              )
-            })}
-          </Text>
-        ))}
-      </Box>
-      <Box justifyContent="space-between">
-        <Text color={FG}>
-          {user
-            ? `¡Hola de nuevo, @${user.username}!`
-            : "wallet personal en tu terminal"}
-        </Text>
-        <ConnStatus state={conn} />
-      </Box>
-      <Text color={DIM}>pulsa cualquier tecla para entrar</Text>
     </Box>
   )
 }
