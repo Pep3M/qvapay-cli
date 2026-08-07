@@ -6,8 +6,7 @@ export function NoAuth() {
     <Box flexDirection="column">
       <Text color="yellow">No hay sesión.</Text>
       <Text color={FG}>
-        Ejecuta <Text color={ACCENT}>qvapay login</Text> y vuelve a abrir la
-        interfaz.
+        Pulsa <Text color={ACCENT}>Enter</Text> para iniciar sesión aquí mismo.
       </Text>
     </Box>
   )

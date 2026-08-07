@@ -1,18 +1,19 @@
 import { Box, render, Text, useApp, useInput } from "ink"
 import { useCallback, useEffect, useState } from "react"
 import { getUser } from "../lib/auth"
-import { readAuth } from "../lib/config"
+import { clearAuth, readAuth } from "../lib/config"
 import type { Transaction, User } from "../lib/types"
 import { listTransactions } from "../lib/wallet"
 import { BalanceView } from "./components/BalanceView"
 import { ComingSoon } from "./components/ComingSoon"
 import { connOf } from "./components/ConnStatus"
 import { Footer } from "./components/Footer"
+import { LoginView } from "./components/LoginView"
 import { NoAuth } from "./components/NoAuth"
 import { TabStrip } from "./components/TabStrip"
 import { TitleBar } from "./components/TitleBar"
 import { TxView } from "./components/TxView"
-import { errMsg, LINE, RED } from "./theme"
+import { errMsg, FG, GREEN, LINE, MUTED, RED } from "./theme"
 
 interface AppProps {
   initialUser?: User
@@ -29,6 +30,17 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
   const [loading, setLoading] = useState(!initialUser && !fixture)
   const [error, setError] = useState<string | null>(null)
   const [noAuth, setNoAuth] = useState(false)
+  const [overlay, setOverlay] = useState<null | "confirm" | "login">(null)
+
+  const doLogout = useCallback(async () => {
+    await clearAuth()
+    setToken(null)
+    setUser(undefined)
+    setTxs(undefined)
+    setTab(1)
+    setNoAuth(true)
+    setOverlay(null)
+  }, [])
 
   // Carga el perfil desde la API. Reutilizada en el montaje y al pulsar 'r'.
   const loadProfile = useCallback(async () => {
@@ -72,13 +84,23 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
   }, [tab, txs, token, fixture])
 
   useInput((input, key) => {
+    if (overlay === "login") return // LoginView captura sus propias teclas
+    if (overlay === "confirm") {
+      if (input === "s" || input === "S") doLogout()
+      else if (key.escape || input === "n" || input === "N") setOverlay(null)
+      return
+    }
     if (input === "q" || (key.ctrl && input === "c")) return exit()
+    if (noAuth) {
+      if (!fixture && (key.return || input === "l")) setOverlay("login")
+      return
+    }
     if (key.escape) tab === 1 ? exit() : setTab(1)
     else if (["1", "2", "3", "4", "5"].includes(input)) setTab(Number(input))
     else if (input === "r" && !fixture) {
       setTxs(undefined)
       loadProfile()
-    }
+    } else if (input === "x" && !fixture) setOverlay("confirm")
   })
 
   const recent = txs ?? user?.latest_transactions ?? []
@@ -94,7 +116,26 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
       <TitleBar />
       <TabStrip active={tab} />
       <Box flexDirection="column" paddingY={1} minHeight={14}>
-        {noAuth ? (
+        {overlay === "login" ? (
+          <LoginView
+            onDone={() => {
+              setOverlay(null)
+              setNoAuth(false)
+              loadProfile()
+            }}
+            onCancel={() => setOverlay(null)}
+          />
+        ) : overlay === "confirm" ? (
+          <Box flexDirection="column">
+            <Text color={FG}>¿Cerrar la sesión actual?</Text>
+            <Box marginTop={1}>
+              <Text color={MUTED}>
+                <Text color={GREEN}>s</Text> sí {"  "}
+                <Text color={RED}>n</Text> no
+              </Text>
+            </Box>
+          </Box>
+        ) : noAuth ? (
           <NoAuth />
         ) : error ? (
           <Text color={RED}>✖ {error}</Text>

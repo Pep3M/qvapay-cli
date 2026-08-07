@@ -9,6 +9,7 @@ export function Footer({ conn }: { conn: Conn }) {
         <Text color="#9a9ec2">1-5</Text> vista {"  "}
         <Text color="#9a9ec2">r</Text> refrescar {"  "}
         <Text color="#9a9ec2">Esc</Text> volver {"  "}
+        <Text color="#9a9ec2">x</Text> salir sesión {"  "}
         <Text color="#9a9ec2">q</Text> salir
       </Text>
       <ConnStatus state={conn} />
