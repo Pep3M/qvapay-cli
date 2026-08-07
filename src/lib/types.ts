@@ -30,6 +30,13 @@ export interface Me {
   p2p_enabled: boolean
 }
 
+// Respuesta de POST /transaction/transfer.
+export interface TransferResponse {
+  success: boolean
+  message: string
+  transaction: string // UUID
+}
+
 export interface QvaPayApiError {
   error?: string
   errors?: string[]

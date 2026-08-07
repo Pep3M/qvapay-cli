@@ -32,6 +32,7 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
   const [error, setError] = useState<string | null>(null)
   const [noAuth, setNoAuth] = useState(false)
   const [overlay, setOverlay] = useState<null | "confirm" | "login">(null)
+  const [editing, setEditing] = useState(false) // ConfigView editando un campo
 
   const doLogout = useCallback(async () => {
     await clearAuth()
@@ -85,7 +86,7 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
   }, [tab, txs, token, fixture])
 
   useInput((input, key) => {
-    if (overlay === "login") return // LoginView captura sus propias teclas
+    if (overlay === "login" || editing) return // el sub-componente captura teclas
     if (overlay === "confirm") {
       if (input === "s" || input === "S") doLogout()
       else if (key.escape || input === "n" || input === "N") setOverlay(null)
@@ -146,7 +147,7 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
         ) : tab === 2 ? (
           <ComingSoon
             title="Nuevo envío"
-            note="Disponible en Fase 4 · requiere PIN por correo"
+            note="Usa la terminal: qvapay send <usuario> <monto> · pide PIN por correo"
           />
         ) : tab === 3 ? (
           <ComingSoon title="Mercado P2P" note="Próximamente" />
@@ -158,7 +159,7 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
             note="Gift cards · Recargas · eSIM · Próximamente"
           />
         ) : (
-          <ConfigView />
+          <ConfigView onEditing={setEditing} />
         )}
       </Box>
       <Footer conn={conn} />
