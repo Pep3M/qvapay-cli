@@ -1,0 +1,53 @@
+name: release
+
+# Un tag v* dispara el release completo (npm + binarios). Versionado manual.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # crear el Release
+  id-token: write # provenance de npm
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # node para `npm publish --provenance`.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun test
+
+      # Bundle npm + publish con provenance (prepublishOnly ya corre el build).
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Los 5 binarios autocontenidos + checksums.
+      - run: bun run build.ts --compile
+      - name: SHA256SUMS
+        run: |
+          cd dist
+          sha256sum qvapay-linux-x64 qvapay-linux-arm64 qvapay-darwin-x64 \
+            qvapay-darwin-arm64 qvapay-windows-x64.exe > SHA256SUMS
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/qvapay-linux-x64
+            dist/qvapay-linux-arm64
+            dist/qvapay-darwin-x64
+            dist/qvapay-darwin-arm64
+            dist/qvapay-windows-x64.exe
+            dist/SHA256SUMS
