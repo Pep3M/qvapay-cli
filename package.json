@@ -1,9 +1,15 @@
 {
   "name": "@pep3m/qvapay",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI para la wallet personal de QvaPay: TUI interactiva y comandos directos.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pep3M/qvapay-cli.git"
+  },
+  "homepage": "https://github.com/Pep3M/qvapay-cli#readme",
+  "bugs": "https://github.com/Pep3M/qvapay-cli/issues",
   "bin": {
     "qvapay": "dist/cli.js"
   },
