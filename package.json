@@ -32,7 +32,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@clack/prompts": "^0.7.0",
+    "@clack/prompts": "^1.7.0",
     "commander": "^12.1.0",
     "ink": "^7.1.1",
     "ink-spinner": "^5.0.0",
