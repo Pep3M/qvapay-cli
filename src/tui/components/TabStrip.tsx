@@ -7,6 +7,7 @@ export const TABS = [
   { num: 3, label: "P2P" },
   { num: 4, label: "Transacciones" },
   { num: 5, label: "Tienda" },
+  { num: 6, label: "Config" },
 ]
 
 export function TabStrip({ active }: { active: number }) {

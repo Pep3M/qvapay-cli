@@ -2,8 +2,15 @@
 import { Command } from "commander"
 import pkg from "../package.json" with { type: "json" }
 import { balanceCommand } from "./commands/balance"
+import {
+  configCommand,
+  configGetCommand,
+  configSetCommand,
+} from "./commands/config"
 import { loginCommand } from "./commands/login"
 import { logoutCommand } from "./commands/logout"
+import { sendCommand } from "./commands/send"
+import { skillInstallCommand } from "./commands/skill"
 import { txGetCommand, txListCommand } from "./commands/tx"
 import { whoamiCommand } from "./commands/whoami"
 
@@ -40,6 +47,40 @@ tx.command("list")
 tx.command("get <uuid>")
   .description("Detalle de una transacción")
   .action((uuid) => txGetCommand(uuid, program.opts()))
+
+program
+  .command("send <usuario> <monto>")
+  .description("Transferir saldo (pide PIN; sujeto a política local)")
+  .option("--note <texto>", "nota/descripción de la transferencia")
+  .action((to, monto, opts) =>
+    sendCommand(to, monto, { ...program.opts(), ...opts })
+  )
+
+const config = program
+  .command("config")
+  .description("Política de send (límites, whitelist)")
+  .action(() => configCommand())
+config
+  .command("get <clave>")
+  .description("Leer un valor (send.enabled|maxPerTx|dailyCap|whitelist)")
+  .action((clave) => configGetCommand(clave, program.opts()))
+config
+  .command("set <clave> <valor>")
+  .description("Fijar un valor")
+  .action((clave, valor) => configSetCommand(clave, valor))
+
+const skill = program
+  .command("skill")
+  .description("Skill para agentes (claude-code, cursor, codex, opencode)")
+skill
+  .command("install")
+  .description("Instala la skill en el agente indicado")
+  .requiredOption(
+    "--agent <agente>",
+    "claude-code | cursor | codex | opencode"
+  )
+  .option("--global", "instalar en el home del agente (no en el proyecto)")
+  .action((opts) => skillInstallCommand({ ...program.opts(), ...opts }))
 
 // Sin subcomando -> TUI (Ink, carga perezosa). Con subcomando -> Commander.
 if (process.argv.length <= 2) {

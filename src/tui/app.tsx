@@ -6,6 +6,7 @@ import type { Transaction, User } from "../lib/types"
 import { listTransactions } from "../lib/wallet"
 import { BalanceView } from "./components/BalanceView"
 import { ComingSoon } from "./components/ComingSoon"
+import { ConfigView } from "./components/ConfigView"
 import { connOf } from "./components/ConnStatus"
 import { Footer } from "./components/Footer"
 import { LoginView } from "./components/LoginView"
@@ -96,7 +97,8 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
       return
     }
     if (key.escape) tab === 1 ? exit() : setTab(1)
-    else if (["1", "2", "3", "4", "5"].includes(input)) setTab(Number(input))
+    else if (["1", "2", "3", "4", "5", "6"].includes(input))
+      setTab(Number(input))
     else if (input === "r" && !fixture) {
       setTxs(undefined)
       loadProfile()
@@ -150,11 +152,13 @@ export function App({ initialUser, initialTxs, fixture }: AppProps) {
           <ComingSoon title="Mercado P2P" note="Próximamente" />
         ) : tab === 4 ? (
           <TxView txs={txs} />
-        ) : (
+        ) : tab === 5 ? (
           <ComingSoon
             title="Tienda"
             note="Gift cards · Recargas · eSIM · Próximamente"
           />
+        ) : (
+          <ConfigView />
         )}
       </Box>
       <Footer conn={conn} />
