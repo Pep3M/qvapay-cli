@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # Sube los SHAs de las actions pineadas en los workflows.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+  # Dependencias npm del CLI.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
